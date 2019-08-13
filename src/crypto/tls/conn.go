@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -142,6 +143,17 @@ func (c *Conn) SetReadDeadline(t time.Time) error {
 // After a Write has timed out, the TLS state is corrupt and all future writes will return the same error.
 func (c *Conn) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
+}
+
+// File returns a copy of the underlying os.File It is the caller's responsibility
+// to close f when finished. Closing c does not affect f, and closing f does not affect c.
+// The returned os.File's file descriptor is different from the connection's.
+// Attempting to change properties of the original using this duplicate may or may not have the desired effect. 
+func (c *Conn) File() (f *os.File, err error) {
+	if conn, ok := c.conn.(*net.TCPConn); ok {
+		return conn.File()
+	}
+	return nil, fmt.Errorf("TCPConn: Unable to open underlying file");
 }
 
 // A halfConn represents one direction of the record layer
